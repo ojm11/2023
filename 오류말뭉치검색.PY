@@ -2,20 +2,27 @@ import os
 import csv
 from lxml import etree
 
+config_file_name = "default_path.txt"
+
 def save_default_path(path, path2):
-    with open("default_path.txt", "w") as file:
+    with open(config_file_name, "w") as file:
         path3 = [path, path2]
         file.writelines(path3)
 
 def load_default_path():
-    try:
-        with open("default_path.txt", "r") as file:
+    if os.path.exists(config_file_name):
+        with open(config_file_name, "r") as file:
             default_path = file.readline().strip()
             default_out_path = file.readline().strip()
             return default_path, default_out_path
-        
-    except FileNotFoundError:
-        return None
+    else :
+        # 파일이 없으면 생성하고 기본 경로 저장
+        with open(config_file_name, 'w') as file:
+            default_path = os.getcwd() 
+            default_out_path = os.path.join(default_path, "out.csv")
+            path3 = [default_path + "\n", default_out_path + "\n"]
+            file.writelines(path3)
+            return default_path, default_out_path
     
 def write_header(header) :
 
@@ -114,9 +121,9 @@ def find_matching_Errormorphemes(writer,
     print(f"XPATH : {xpath_s_full}")
 
     # 지정된 폴더 내의 모든 XML 파일을 탐색
-    for filename in os.listdir(directory):
+    for filename in os.listdir(directory_name):
         if filename.endswith('.xml'):
-            file_path = os.path.join(directory, filename)
+            file_path = os.path.join(directory_name, filename)
 
             # XML 파일 파싱
             with open(file_path, 'rb') as file:
@@ -156,6 +163,11 @@ def find_matching_Errormorphemes(writer,
                     errorArea = ""
                     ErrorPattern = ""
                     lea_word_w = ""
+                    lea_sentence_left = ""
+                    lea_sentence_right = ""
+
+                    ma_sentence_from_i = int(ma_from)
+                    ma_sentence_to_i = int(ma_to)
 
                     for lea_morph in morphs:
                         lea_word = lea_morph.getparent()
@@ -178,11 +190,35 @@ def find_matching_Errormorphemes(writer,
                             lea_to = morph_to
                             lea_sub = morph_sub
                             lea_v = lea_morph.findtext('Proofread')
-                            lea_pos = lea_morph.find('Proofread').get('pos')
-                            errorArea = lea_morph.find('ErrorArea').get('type')
-                            ErrorPattern = lea_morph.find('ErrorPattern').get('type')
+                            
+                            lea_from_i = int(lea_from)
+                            lea_to_i = int(lea_to)
+
+                            lea_pos_t = lea_morph.find('Proofread')
+                            if lea_pos_t is not None :
+                                lea_pos = lea_pos_t.get('pos')
+                            else :
+                                lea_pos = ""
+
+                            errorArea_t = lea_morph.find('ErrorArea')
+                            if errorArea_t is not None :
+                                errorArea = errorArea_t.get('type')
+                            else :
+                                errorArea = ""
+
+                            ErrorPattern_t = lea_morph.find('ErrorPattern')
+                            if ErrorPattern_t is not None :
+                                ErrorPattern = ErrorPattern_t.get('type')
+                            else :
+                                ErrorPattern = ""
+
                             lea_word_w = lea_word.findtext('w')
                             find = True
+                            
+                            if ma_sentence_from_i <= lea_from_i and lea_to_i <= ma_sentence_to_i :
+                                lea_sentence_left = full_s[:(lea_to_i - lea_from_i - 1)].strip()
+                                lea_sentence_right = full_s[(lea_to_i - ma_sentence_from_i):].strip()
+
                             print(etree.tostring(lea_morph, pretty_print=True, encoding='utf-8').decode('utf-8'))
                             break
                     
@@ -204,9 +240,9 @@ def find_matching_Errormorphemes(writer,
                                 morph_pos, 
                                 lea_v,
                                 lea_pos,
-                                full_s,
+                                lea_sentence_left,
                                 lea_word_w,
-                                '',
+                                lea_sentence_right,
                                 errorArea,
                                 ErrorPattern,
                                 ''
@@ -311,10 +347,10 @@ sejong_pos_tags = [
 
 # 기본 경로 로드
 default_path, default_out_path = load_default_path()
-if not default_path :
+if default_path == "":
     default_path = os.getcwd()
 
-if not default_out_path :
+if default_out_path == "" :
     curpath = os.getcwd() 
     default_out_path = os.path.join(curpath, "out.csv")
 
