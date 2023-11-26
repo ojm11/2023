@@ -100,7 +100,7 @@ def makexpath(original_form,
     for sp in selected_error_location :
         if spv != "" :
             spv += " or "
-        spv += f"@type='{sp}'"
+        spv += f"contains(concat(';', @type, ';'), ';{sp};')"
     
     if spv :
         if xpath_full != "":
@@ -462,4 +462,3 @@ with open(csv_file, 'w', newline='', encoding='utf-8') as csvfile:
     #                         selected_error_aspect,
     #                         selected_error_location
     #                         )
-
