@@ -223,7 +223,7 @@ def find_matching_Errormorphemes(writer,
                             break
                     
                     # 조건검사
-                    if logic == "AND" :
+                    if selected_logic == "AND" :
                         if find and original_form == ma_text:
                             find = True
                         else :
@@ -365,7 +365,7 @@ selected_logic = ""
 if original_form and correction_form :
   while True :
     print("검색 조건을 선택하세요:")
-    logic_menu = "1. 그리고    2. 또는"
+    logic_menu = "1. 그리고    2. 또는 :"
     retv = input(logic_menu)
     if not retv :
         selected_logic = "AND"
